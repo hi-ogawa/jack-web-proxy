@@ -7,7 +7,7 @@ env:
   MSRV: "1.60"
 
 on:
-  - push:
+  - push
 
 jobs:
   lint:
@@ -16,9 +16,6 @@ jobs:
       - uses: actions/checkout@master
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: beta
-          override: true
-          profile: minimal
           components: clippy, rustfmt
       - run: cargo clippy
       - run: cargo fmt --check
