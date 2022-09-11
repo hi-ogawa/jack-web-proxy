@@ -2,12 +2,12 @@
 
 name: ci
 
+on:
+  - push
+
 env:
   CARGO_TERM_COLOR: always
   MSRV: "1.60"
-
-on:
-  - push
 
 jobs:
   build:
