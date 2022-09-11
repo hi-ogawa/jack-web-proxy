@@ -38,7 +38,8 @@ curl localhost:3000/sse
 # data:changed
 
 # POST /api/connect (cf. https://jackaudio.org/api/group__PortFunctions.html)
-curl localhost:3000/sse -d '{ source: "xxx", destination: "yyy" }'
+curl localhost:3000/api/connect --json '{ "source": "PulseAudio JACK Sink:front-right", "destination": "system:playback_2" }'
+# { "success": true }
 ```
 
 ## TODO

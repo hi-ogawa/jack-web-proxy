@@ -2,11 +2,12 @@ use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::sse::Event;
 use axum::response::sse::{KeepAlive, Sse};
-use axum::routing::get;
+use axum::routing::{get, post};
 use axum::{response::IntoResponse, Json};
 use futures::stream::Stream;
 use jack::PortFlags;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+use serde_json::json;
 use std::convert::Infallible;
 use std::error::Error;
 use std::sync::Arc;
@@ -17,6 +18,7 @@ use tokio::sync::RwLock;
 mod utils;
 
 // TODO: avoid unwrap panic
+// TODO: logging
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -60,8 +62,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .route("/", get(get_root))
         .route("/sse", get(get_sse))
         .route("/summary", get(get_summary))
-        // TODO
-        .route("/api", get(get_root));
+        // TODO: auto generate jack APIs
+        .route("/api/connect", post(post_api_connect))
+        .route("/api/disconnect", post(post_api_disconnect));
 
     //
     // run app
@@ -196,6 +199,42 @@ async fn get_sse(
             .interval(Duration::from_secs(10))
             .text("keepalive"),
     )
+}
+
+//
+// POST /api/connect
+//
+
+#[derive(Deserialize)]
+struct ConnectionRequest {
+    source: String,
+    destination: String,
+}
+
+async fn post_api_connect(
+    State(state): State<AppStateWrapper>,
+    Json(req): Json<ConnectionRequest>,
+) -> impl IntoResponse {
+    let jack_client = &mut state.write().await.jack_client;
+    match jack_client.connect_ports_by_name(&req.source, &req.destination) {
+        Err(e) => Err(Json(json!({ "success": false, "error": e.to_string() }))),
+        _ => Ok(Json(json!({ "success": true }))),
+    }
+}
+
+//
+// POST /api/disconnect
+//
+
+async fn post_api_disconnect(
+    State(state): State<AppStateWrapper>,
+    Json(req): Json<ConnectionRequest>,
+) -> impl IntoResponse {
+    let jack_client = &mut state.write().await.jack_client;
+    match jack_client.disconnect_ports_by_name(&req.source, &req.destination) {
+        Err(e) => Err(Json(json!({ "success": false, "error": e.to_string() }))),
+        _ => Ok(Json(json!({ "success": true }))),
+    }
 }
 
 //
