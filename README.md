@@ -14,6 +14,8 @@ curl localhost:3000/summary | jq
 #   "ports": [
 #     {
 #       "id": "system:capture_1",
+#       "client_name": "system",
+#       "port_name": "capture_1",
 #       "flags": [
 #         "IS_OUTPUT",
 #         "IS_PHYSICAL",

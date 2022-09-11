@@ -121,9 +121,8 @@ impl Serialize for SerdePortFlags {
 #[derive(serde::Serialize)]
 struct PortInfo {
     id: String,
-    // TODO
-    // group_name: String,
-    // port_name: String,
+    client_name: String,
+    port_name: String,
     flags: SerdePortFlags,
 }
 
@@ -154,21 +153,34 @@ async fn get_summary(State(state): State<AppStateWrapper>) -> impl IntoResponse 
         if let Some(port) = jack_client.port_by_name(id) {
             let flags = port.flags();
 
-            result.ports.push(PortInfo {
-                id: id.clone(),
-                flags: SerdePortFlags(flags),
-            });
-
-            // get connections from each output
-            if flags.intersects(jack::PortFlags::IS_OUTPUT) {
-                unsafe {
-                    let destinations = utils::collect_c_strings(
-                        jack_sys::jack_port_get_all_connections(jack_client.raw(), port.raw()),
-                    );
-                    result.connections.push(ConnectionInfo {
-                        source: id.clone(),
-                        destinations,
+            match id.split(":").next() {
+                None => {
+                    println!("unexpected port name: {}", id);
+                    continue;
+                }
+                Some(client_name) => {
+                    let port_name = &id[(client_name.len() + 1)..];
+                    result.ports.push(PortInfo {
+                        id: id.clone(),
+                        client_name: client_name.to_string(),
+                        port_name: port_name.to_string(),
+                        flags: SerdePortFlags(flags),
                     });
+
+                    // get connections from each output
+                    if flags.intersects(jack::PortFlags::IS_OUTPUT) {
+                        unsafe {
+                            let destinations =
+                                utils::collect_c_strings(jack_sys::jack_port_get_all_connections(
+                                    jack_client.raw(),
+                                    port.raw(),
+                                ));
+                            result.connections.push(ConnectionInfo {
+                                source: id.clone(),
+                                destinations,
+                            });
+                        }
+                    }
                 }
             }
         }
