@@ -17,7 +17,6 @@ use tokio::sync::broadcast::{self, Sender};
 use tokio::sync::RwLock;
 mod utils;
 
-// TODO: avoid unwrap panic
 // TODO: logging
 
 #[tokio::main]
@@ -152,24 +151,25 @@ async fn get_summary(State(state): State<AppStateWrapper>) -> impl IntoResponse 
     };
 
     for id in &port_names {
-        let port = jack_client.port_by_name(id).unwrap();
-        let flags = port.flags();
+        if let Some(port) = jack_client.port_by_name(id) {
+            let flags = port.flags();
 
-        result.ports.push(PortInfo {
-            id: id.clone(),
-            flags: SerdePortFlags(flags),
-        });
+            result.ports.push(PortInfo {
+                id: id.clone(),
+                flags: SerdePortFlags(flags),
+            });
 
-        // get connections from each output
-        if flags.intersects(jack::PortFlags::IS_OUTPUT) {
-            unsafe {
-                let destinations = utils::collect_c_strings(
-                    jack_sys::jack_port_get_all_connections(jack_client.raw(), port.raw()),
-                );
-                result.connections.push(ConnectionInfo {
-                    source: id.clone(),
-                    destinations,
-                });
+            // get connections from each output
+            if flags.intersects(jack::PortFlags::IS_OUTPUT) {
+                unsafe {
+                    let destinations = utils::collect_c_strings(
+                        jack_sys::jack_port_get_all_connections(jack_client.raw(), port.raw()),
+                    );
+                    result.connections.push(ConnectionInfo {
+                        source: id.clone(),
+                        destinations,
+                    });
+                }
             }
         }
     }
