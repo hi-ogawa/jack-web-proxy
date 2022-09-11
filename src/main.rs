@@ -17,10 +17,10 @@ use tokio::sync::broadcast::{self, Sender};
 use tokio::sync::RwLock;
 mod utils;
 
-// TODO: logging
-
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    tracing_subscriber::fmt::init();
+
     //
     // two jack clients
     //
@@ -49,7 +49,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     //
     let active_client = jack_client_notification.activate_async(
         utils::PortChangeNotifier(move || {
-            println!("send result = {:?}", notification_sender.send(()));
+            tracing::info!(
+                "PortChangeNotifier send result: {:?}",
+                notification_sender.send(())
+            );
         }),
         (),
     )?;
@@ -69,6 +72,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // run app
     //
     let addr = SocketAddr::from_str("127.0.0.1:3000")?;
+    tracing::info!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await?;
@@ -155,7 +159,7 @@ async fn get_summary(State(state): State<AppStateWrapper>) -> impl IntoResponse 
 
             match id.split(':').next() {
                 None => {
-                    println!("unexpected port name: {}", id);
+                    tracing::error!("unexpected port name: {}", id);
                     continue;
                 }
                 Some(client_name) => {
