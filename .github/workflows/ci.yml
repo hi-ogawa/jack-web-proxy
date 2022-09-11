@@ -10,7 +10,7 @@ on:
   - push
 
 jobs:
-  lint:
+  build:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@master
@@ -21,3 +21,4 @@ jobs:
       - run: sudo apt update && sudo apt install libjack-dev # jack-sys dependency
       - run: cargo clippy
       - run: cargo fmt --check
+      - run: cargo build
