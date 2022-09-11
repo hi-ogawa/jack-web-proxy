@@ -1,0 +1,18 @@
+[package]
+name = "jack-web-proxy"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+async-stream = "0.3.3"
+axum = "0.6.0-rc.1"
+axum-macros = "0.2.3"
+futures = "0.3.24"
+jack = "0.10.0"
+jack-sys = "0.4.0"
+libc = "0.2.132"
+serde = { version = "1.0.144", features = ["derive"] }
+serde_json = "1.0.85"
+tokio = { version = "1", features = ["full"] }
+tokio-stream = "0.1.9"
