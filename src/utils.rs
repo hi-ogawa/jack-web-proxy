@@ -23,3 +23,41 @@ pub unsafe fn collect_c_strings(ptr: *const *const libc::c_char) -> Vec<String> 
     j::jack_free(ptr as *mut ::libc::c_void);
     strs
 }
+
+//
+// jack notification closure callback (cf. https://github.com/RustAudio/rust-jack/blob/6133ac4d3654668f461a036fef8e3d9655b6c372/src/client/handler_impls.rs)
+//
+
+pub struct PortChangeNotifier<F: 'static + Send + Fn()>(pub F);
+
+impl<F: 'static + Send + Fn()> jack::NotificationHandler for PortChangeNotifier<F> {
+    fn port_registration(
+        &mut self,
+        _: &jack::Client,
+        _port_id: jack::PortId,
+        _is_registered: bool,
+    ) {
+        (self.0)();
+    }
+
+    fn port_rename(
+        &mut self,
+        _: &jack::Client,
+        _port_id: jack::PortId,
+        _old_name: &str,
+        _new_name: &str,
+    ) -> jack::Control {
+        (self.0)();
+        jack::Control::Continue
+    }
+
+    fn ports_connected(
+        &mut self,
+        _: &jack::Client,
+        _port_id_a: jack::PortId,
+        _port_id_b: jack::PortId,
+        _are_connected: bool,
+    ) {
+        (self.0)();
+    }
+}

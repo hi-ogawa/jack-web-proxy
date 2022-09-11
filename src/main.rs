@@ -48,7 +48,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // start jack notification callback thread
     //
     let active_client = jack_client_notification.activate_async(
-        PortChangeNotifier(move || {
+        utils::PortChangeNotifier(move || {
             println!("send result = {:?}", notification_sender.send(()));
         }),
         (),
@@ -153,7 +153,7 @@ async fn get_summary(State(state): State<AppStateWrapper>) -> impl IntoResponse 
         if let Some(port) = jack_client.port_by_name(id) {
             let flags = port.flags();
 
-            match id.split(":").next() {
+            match id.split(':').next() {
                 None => {
                     println!("unexpected port name: {}", id);
                     continue;
@@ -246,43 +246,5 @@ async fn post_api_disconnect(
     match jack_client.disconnect_ports_by_name(&req.source, &req.destination) {
         Err(e) => Err(Json(json!({ "success": false, "error": e.to_string() }))),
         _ => Ok(Json(json!({ "success": true }))),
-    }
-}
-
-//
-// jack notification closure callback
-//
-
-struct PortChangeNotifier<F: 'static + Send + Fn()>(F);
-
-impl<F: 'static + Send + Fn()> jack::NotificationHandler for PortChangeNotifier<F> {
-    fn port_registration(
-        &mut self,
-        _: &jack::Client,
-        _port_id: jack::PortId,
-        _is_registered: bool,
-    ) {
-        (self.0)();
-    }
-
-    fn port_rename(
-        &mut self,
-        _: &jack::Client,
-        _port_id: jack::PortId,
-        _old_name: &str,
-        _new_name: &str,
-    ) -> jack::Control {
-        (self.0)();
-        jack::Control::Continue
-    }
-
-    fn ports_connected(
-        &mut self,
-        _: &jack::Client,
-        _port_id_a: jack::PortId,
-        _port_id_b: jack::PortId,
-        _are_connected: bool,
-    ) {
-        (self.0)();
     }
 }
