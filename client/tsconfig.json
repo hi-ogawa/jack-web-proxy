@@ -1,0 +1,9 @@
+{
+  "extends": "@tsconfig/node16-strictest",
+  "include": ["src"],
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["@types/node"],
+    "jsx": "react-jsx"
+  }
+}
