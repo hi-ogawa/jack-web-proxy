@@ -1,12 +1,21 @@
 import React, { useState } from "react";
 import ReactFlow, {
+  addEdge,
   applyEdgeChanges,
   applyNodeChanges,
+  Connection,
+  Edge,
+  EdgeChange,
+  Handle,
+  Node,
+  NodeChange,
+  NodeProps,
+  Position,
 } from "react-flow-renderer";
 
 // https://reactflow.dev/docs/getting-started/core-concepts/
 
-const initialNodes = [
+const initialNodes: Node[] = [
   {
     id: "1",
     type: "input",
@@ -26,9 +35,15 @@ const initialNodes = [
     data: { label: "Output Node" },
     position: { x: 250, y: 250 },
   },
+  {
+    id: "4",
+    type: "custom",
+    data: { name: "Custom" },
+    position: { x: 100, y: 100 },
+  },
 ];
 
-const initialEdges = [
+const initialEdges: Edge[] = [
   { id: "e1-2", source: "1", target: "2" },
   { id: "e2-3", source: "2", target: "3", animated: true },
 ];
@@ -38,12 +53,15 @@ export function NodeEditor() {
   const [edges, setEdges] = useState(initialEdges);
 
   const onNodesChange = React.useCallback(
-    // @ts-expect-error
-    (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
+    (changes: NodeChange[]) => setNodes((nds) => applyNodeChanges(changes, nds)),
     [setNodes]
   );
   const onEdgesChange = React.useCallback(
-    (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
+    (changes: EdgeChange[]) => setEdges((eds) => applyEdgeChanges(changes, eds)),
+    [setEdges]
+  );
+  const onConnect = React.useCallback(
+    (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
     [setEdges]
   );
 
@@ -51,9 +69,32 @@ export function NodeEditor() {
     <ReactFlow
       nodes={nodes}
       edges={edges}
+      nodeTypes={NODE_TYPES}
       fitView
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
+      onConnect={onConnect}
     />
   );
+}
+
+const NODE_TYPES = {
+  custom: CustomNode,
+};
+
+interface NodeData {
+  name: string;
+}
+
+function CustomNode(props: NodeProps<NodeData>) {
+  return <>
+    <Handle type="target" id="z" position={Position.Left} isConnectable>
+      <div className="border">
+        z
+      </div>
+    </Handle>
+    <div className="p-2 border">{props.data.name}</div>
+    <Handle type="source" id="x" position={Position.Right} isConnectable style={{ top: 2 }}>x</Handle>
+    <Handle type="source" id="y" position={Position.Right} isConnectable style={{ top: "auto", bottom: 2 }} />
+  </>;
 }
