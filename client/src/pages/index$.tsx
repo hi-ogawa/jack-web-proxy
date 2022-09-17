@@ -1,12 +1,10 @@
 import { NodeEditor } from "../components/node-editor";
-import { NodeEditorFlume } from "../components/node-editor-flume";
 
 export default function Page() {
   return (
-    <div className="flex justify-center items-center">
-      <div className="w-xl h-xl">
-        {/* <NodeEditor /> */}
-        <NodeEditorFlume />
+    <div className="h-full flex justify-center items-center p-4 bg-gray-50">
+      <div className="w-4xl h-4xl border bg-white">
+        <NodeEditor />
       </div>
     </div>
   );
